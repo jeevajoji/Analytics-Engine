@@ -1,0 +1,359 @@
+================================================================================
+                    ANALYTICS ENGINE (AE) - DEVELOPER GUIDE
+================================================================================
+
+Welcome! This guide will help you understand the Analytics Engine codebase.
+This project was developed by Jeeva with AI assistance (GitHub Copilot).
+
+================================================================================
+                              WHAT IS AE?
+================================================================================
+
+Analytics Engine (AE) is a generic, modular backend processing engine designed
+for the Intelligent Operations Platform (IOP). 
+
+KEY DESIGN PHILOSOPHY:
+- AE is NOT domain-specific - it's a general-purpose analytics framework
+- Business logic comes from CONFIGURATION (YAML/JSON), not hardcoded logic
+- Multiple companies can use AE with different "Packs" for their specific needs
+- Think of AE as "Lego blocks" - operators are blocks, pipelines are structures
+
+EXAMPLE USE CASES:
+- Fleet management analytics (route optimization, vehicle monitoring)
+- Manufacturing efficiency tracking
+- Financial data analysis
+- IoT sensor monitoring
+- Any domain that needs data processing, rules, and predictions
+
+================================================================================
+                           ARCHITECTURE OVERVIEW
+================================================================================
+
+                    ┌─────────────────────────────────────┐
+                    │           PACK SYSTEM               │
+                    │  (YAML configs define pipelines)    │
+                    └─────────────┬───────────────────────┘
+                                  │
+                    ┌─────────────▼───────────────────────┐
+                    │            LANES                    │
+                    │  ┌──────────────┐ ┌──────────────┐  │
+                    │  │ Analytics    │ │ Ruleset      │  │
+                    │  │ (Batch)      │ │ (Real-time)  │  │
+                    │  └──────────────┘ └──────────────┘  │
+                    └─────────────┬───────────────────────┘
+                                  │
+                    ┌─────────────▼───────────────────────┐
+                    │           PIPELINE                  │
+                    │     (DAG of operators)              │
+                    └─────────────┬───────────────────────┘
+                                  │
+     ┌────────────────────────────┼────────────────────────────┐
+     │                            │                            │
+┌────▼─────┐  ┌────▼─────┐  ┌────▼─────┐  ┌────▼─────┐  ┌────▼─────┐
+│ Filter   │  │Aggregate │  │Threshold │  │ Anomaly  │  │ Forecast │
+│ Operator │  │ Operator │  │Evaluator │  │ Detector │  │ Operator │
+└──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘
+                                  │
+                    ┌─────────────▼───────────────────────┐
+                    │          BASE OPERATOR              │
+                    │   (All operators inherit from this) │
+                    └─────────────────────────────────────┘
+
+================================================================================
+                          FOLDER STRUCTURE
+================================================================================
+
+analytics_engine/
+│
+├── core/                    # HEART OF THE ENGINE - Start here!
+│   ├── operator.py          # Base Operator class - ALL operators inherit this
+│   ├── pipeline.py          # Pipeline execution (DAG of operators)
+│   ├── registry.py          # Operator discovery & registration
+│   ├── schema.py            # Data structure definitions
+│   ├── exceptions.py        # Custom error types
+│   ├── dlq.py               # Dead Letter Queue for failed records
+│   ├── metrics.py           # Performance tracking
+│   └── storage.py           # Data persistence
+│
+├── operators/               # ALL THE PROCESSING LOGIC
+│   ├── filter_operator.py   # Filter rows by conditions
+│   ├── aggregator.py        # Sum, mean, count, percentiles
+│   ├── threshold_evaluator.py # Rule evaluation (violations)
+│   ├── window_selector.py   # Time windowing (tumbling, sliding)
+│   ├── join_operator.py     # Combine data streams
+│   ├── anomaly_detector.py  # Detect outliers (Z-score, IQR, ML)
+│   ├── forecast_operator.py # Time-series predictions
+│   ├── cluster_operator.py  # Group similar data (K-Means, DBSCAN)
+│   ├── classification_operator.py # Classify into categories
+│   ├── regression_operator.py # Predict continuous values
+│   ├── event_builder.py     # Create events/alerts
+│   └── reporter.py          # Output results
+│
+├── lanes/                   # EXECUTION MODES
+│   ├── analytics_lane.py    # Batch processing with scheduling
+│   └── ruleset_lane.py      # Real-time rule evaluation
+│
+├── packs/                   # EXTENSIBILITY SYSTEM
+│   ├── models.py            # Pack manifest, types, dependencies
+│   ├── loader.py            # Load packs from directories/archives
+│   ├── registry.py          # Pack discovery
+│   └── validator.py         # Pack validation
+│
+├── adapters/                # I/O CONNECTORS
+│   ├── inputs/
+│   │   ├── influxdb_adapter.py  # Read from InfluxDB
+│   │   └── redis_adapter.py     # Read from Redis
+│   └── outputs/
+│       ├── postgres_adapter.py  # Write to PostgreSQL
+│       └── notification_adapter.py # Send notifications
+│
+├── utils/                   # HELPER UTILITIES
+│   ├── expression_parser.py # Parse filter expressions
+│   ├── time.py              # Time parsing utilities
+│   └── serialization.py     # Data serialization
+│
+└── tests/                   # TEST SUITE
+    ├── test_operator.py
+    ├── test_pipeline.py
+    └── test_e2e.py
+
+================================================================================
+                         HOW TO READ THE CODE
+================================================================================
+
+RECOMMENDED LEARNING ORDER:
+
+PHASE 1: Core Concepts (Start Here - 30 mins)
+─────────────────────────────────────────────
+1. core/schema.py       → How data structure is defined
+2. core/operator.py     → THE MOST IMPORTANT FILE - base class for everything
+3. core/registry.py     → How operators are registered and found
+
+KEY INSIGHT: Every operator:
+  - Inherits from Operator base class
+  - Takes a config (parameters)
+  - Implements process(data: DataFrame) → OperatorResult
+
+
+PHASE 2: Simple Operators (Build Understanding - 1 hr)
+──────────────────────────────────────────────────────
+4. operators/filter_operator.py     → Simplest operator, filter rows
+5. operators/aggregator.py          → Grouping and math operations
+6. operators/threshold_evaluator.py → Rule evaluation
+
+
+PHASE 3: Pipeline & Execution (How it all connects - 1 hr)
+──────────────────────────────────────────────────────────
+7. core/pipeline.py           → How operators chain together
+8. lanes/analytics_lane.py    → Batch processing, job scheduling
+9. lanes/ruleset_lane.py      → Real-time processing
+
+
+PHASE 4: Advanced Operators (Deep dive - 2 hrs)
+───────────────────────────────────────────────
+10. operators/window_selector.py   → Time windowing
+11. operators/join_operator.py     → Combining data
+12. operators/anomaly_detector.py  → ML-based outlier detection
+13. operators/forecast_operator.py → Time-series predictions
+
+
+PHASE 5: Pack System (Extensibility - 1 hr)
+───────────────────────────────────────────
+14. packs/models.py    → What is a pack, manifest structure
+15. packs/loader.py    → How packs are loaded
+16. packs/registry.py  → Pack discovery
+
+================================================================================
+                         KEY CONCEPTS EXPLAINED
+================================================================================
+
+1. OPERATOR
+───────────
+An operator is a stateless processing unit that:
+- Takes input data (Polars DataFrame)
+- Applies some transformation based on config
+- Returns output data
+
+Example:
+    class FilterOperator(Operator):
+        def process(self, data: pl.DataFrame) -> OperatorResult:
+            filtered = data.filter(some_condition)
+            return OperatorResult(success=True, data=filtered)
+
+
+2. PIPELINE
+───────────
+A pipeline is a DAG (Directed Acyclic Graph) of operators:
+
+    Input → Filter → Aggregate → Threshold → Output
+                          ↓
+                      Anomaly → Alert
+
+Operators can branch (one → many) and merge (many → one via JoinOperator)
+
+
+3. LANES
+────────
+Two execution modes:
+
+ANALYTICS LANE (Batch):
+  - Scheduled execution (cron, interval)
+  - Window-based processing
+  - Used for: trends, reports, predictions
+
+RULESET LANE (Real-time):
+  - Per-event processing
+  - Low latency
+  - Used for: safety violations, alerts, compliance
+
+
+4. PACKS
+────────
+Packs are pluggable modules that add:
+  - New operators
+  - Pipeline templates
+  - Schema definitions
+  - Connectors
+
+Pack types:
+  - OPERATOR_PACK: Collection of operators
+  - PIPELINE_TEMPLATE: Pre-built pipeline configs
+  - CONNECTOR_PACK: Input/output adapters
+  - DOMAIN_PACK: Domain-specific operators + templates
+
+
+5. CONFIGURATION-DRIVEN
+───────────────────────
+Business logic is defined in YAML/JSON, not code:
+
+    # Example pipeline config (YAML)
+    pipeline:
+      name: temperature_monitor
+      operators:
+        - name: filter
+          params:
+            expression: "sensor_type == 'temperature'"
+        - name: threshold_evaluator
+          params:
+            rules:
+              - column: value
+                threshold_type: gt
+                value: 100
+                label: "High Temperature"
+
+================================================================================
+                          DATA FLOW EXAMPLE
+================================================================================
+
+Let's trace a real example: Temperature Monitoring Pipeline
+
+1. INPUT (adapters/inputs)
+   └── InfluxDB sends sensor readings every second
+       { sensor_id: "T1", value: 85.5, timestamp: "2026-02-05T10:00:00" }
+
+2. WINDOW SELECTOR (operators/window_selector.py)
+   └── Groups data into 5-minute windows
+       Window: 10:00 - 10:05 with 300 readings
+
+3. FILTER (operators/filter_operator.py)
+   └── Keeps only temperature sensors
+       expression: "sensor_type == 'temperature'"
+
+4. AGGREGATOR (operators/aggregator.py)
+   └── Calculates stats per window
+       { avg: 87.2, max: 102.5, min: 72.1, count: 300 }
+
+5. THRESHOLD EVALUATOR (operators/threshold_evaluator.py)
+   └── Checks if max > 100
+       { is_violation: true, label: "High Temperature" }
+
+6. EVENT BUILDER (operators/event_builder.py)
+   └── Creates alert event
+       { severity: "warning", message: "High temp detected" }
+
+7. OUTPUT (adapters/outputs)
+   └── Sends to PostgreSQL + Notification service
+
+================================================================================
+                         ADDING A NEW OPERATOR
+================================================================================
+
+To create a new operator:
+
+1. Create file: operators/my_operator.py
+
+2. Define config class:
+    class MyOperatorConfig(OperatorConfig):
+        my_param: str
+        threshold: float = 10.0
+
+3. Define operator class:
+    @register_operator
+    class MyOperator(Operator[MyOperatorConfig]):
+        name = "MyOperator"
+        description = "Does something useful"
+        version = "1.0.0"
+        
+        def process(self, data: pl.DataFrame) -> OperatorResult:
+            # Your logic here
+            result = data.with_columns(...)
+            return OperatorResult(success=True, data=result)
+
+4. Export in operators/__init__.py:
+    from .my_operator import MyOperator, MyOperatorConfig
+
+5. Write tests in tests/test_my_operator.py
+
+================================================================================
+                            TESTING
+================================================================================
+
+Run all tests:
+    pytest tests/
+
+Run specific test:
+    pytest tests/test_operator.py
+
+Run with coverage:
+    pytest --cov=analytics_engine tests/
+
+================================================================================
+                          DEPENDENCIES
+================================================================================
+
+Core dependencies (see requirements.txt):
+- polars: High-performance DataFrame library (faster than pandas)
+- pydantic: Data validation and settings
+- scikit-learn: ML algorithms (clustering, anomaly detection)
+
+Optional:
+- prophet: Facebook's forecasting library
+- onnxruntime: For ONNX model inference
+
+================================================================================
+                         COMMON TASKS
+================================================================================
+
+Q: How do I add a new aggregation function?
+A: Edit operators/aggregator.py, add to AggregateFunction enum
+
+Q: How do I add a new anomaly detection method?
+A: Edit operators/anomaly_detector.py, add to AnomalyMethod enum
+
+Q: How do I connect to a new data source?
+A: Create new adapter in adapters/inputs/, inherit from base adapter
+
+Q: How do I create a domain-specific pack?
+A: See packs/models.py for PackManifest structure, create pack.json
+
+================================================================================
+                           CONTACT
+================================================================================
+
+Original Developer: Jeeva
+Development Method: Created with GitHub Copilot AI assistance
+Repository: https://github.com/jeevajoji/Analytics-Engine
+
+================================================================================
+                            END OF GUIDE
+================================================================================
