@@ -371,3 +371,25 @@ def create_pipeline(
         )
     
     return pipeline
+
+'''
+This file defines what a pipeline is and how it executes.
+
+Key parts
+LaneType: marks pipelines as REALTIME or BATCH.
+OperatorNode: a single pipeline step (operator name + params + links).
+Pipeline: a list of nodes (mostly linear chaining here).
+PipelineExecutor: runs operators in sequence.
+
+How execution works
+1.It validates that each operator exists in the registry.
+2. For each node:
+    Creates the operator (with config from node params).
+    Validates input schema.
+    Calls operator.process(data).
+    Passes output to the next node.
+3. Stops if an operator returns None (terminal operator).
+4. Supports:
+    Batch execution (execute)
+    Chunked execution (execute_chunked)
+    Stream execution (execute_stream)'''

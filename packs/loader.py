@@ -516,3 +516,16 @@ class PackManager:
                     })
         
         return results
+'''
+Loads packs from directories or ZIPs and turns them into Pack objects.
+
+PackSource abstract interface.
+DirectoryPackSource / ZipPackSource: read manifest, load modules/files.
+PackLoader:
+Validates manifest (optional).
+Loads operator classes + connector classes.
+Loads schema JSON files.
+Optional auto‑registration in operator registry.
+PackManager:
+Higher‑level API to load/unload packs.
+Search operators across loaded packs.'''

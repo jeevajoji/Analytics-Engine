@@ -493,3 +493,14 @@ def configure_pack_registry(
     )
     set_pack_registry(registry)
     return registry
+
+'''Acts as a catalog + installer for packs.
+PackInfo: lightweight summary of a pack.
+Catalogs:
+LocalPackCatalog (reads installed packs on disk).
+MarketplaceCatalog (placeholder for remote).
+PackRegistry:
+Search packs (local + marketplace).
+Install/uninstall packs.
+Get installed pack from PackManager.
+Pre/post install hooks.'''

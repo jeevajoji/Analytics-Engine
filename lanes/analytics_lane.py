@@ -614,3 +614,21 @@ class AnalyticsLane:
                     self._job_history.append(job)
                     return True
         return False
+'''
+This is the batch/scheduled lane for windowed analytics.
+
+Purpose :Runs pipelines on larger datasets (hourly/daily windows).
+Supports scheduling, job queue, and retries.
+
+Key features
+Scheduling: cron or interval via ScheduleConfig.
+Job system:
+Analytics Job holds execution metadata.
+Priority queue + retry logic.
+Concurrency: worker thread pool for running jobs.
+Chunking: splits large datasets for memory efficiency.
+Metrics: tracks throughput and job success/failure.
+
+Usage pattern -
+♦ Register batch pipelines.
+♦ Schedule them or run on demand.'''

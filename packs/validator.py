@@ -492,3 +492,14 @@ def validate_pack_manifest(manifest_dict: Dict[str, Any]) -> Tuple[bool, List[st
     
     validator = PackValidator()
     return validator.validate_manifest(manifest)
+'''Validates packs and their manifests.
+
+PackValidator.validate_manifest():
+Checks ID format, version format, required fields.
+Validates operators, connectors, templates, dependencies.
+Optional strict checks for description/authors.
+validate_pack():
+Reads manifest from disk.
+Validates files exist (operator modules, templates, schemas).
+Optional Python syntax check.
+ValidationError: structured error holder with code/path/severity.'''

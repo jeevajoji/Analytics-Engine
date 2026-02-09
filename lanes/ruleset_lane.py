@@ -368,3 +368,26 @@ class RulesetLane:
     def reset_metrics(self) -> None:
         """Reset performance metrics."""
         self._metrics = RulesetMetrics()
+'''
+This is the real-time lane for per-event evaluation (low latency).
+
+Purpose
+Designed for single-record processing with immediate results.
+Typical use: safety violations, compliance, incidents.
+
+Flow
+Converts each record to a one-row DataFrame.
+Executes a pipeline via PipelineExecutor.
+Emits results via callbacks and/or output adapters.
+
+Key features
+Callbacks: on_event, on_incident, on_error.
+Adapters:
+InputAdapter (async data source)
+OutputAdapter (async sink)
+Metrics: tracks latency, counts, and errors.
+
+Usage pattern
+♦ Register real-time pipelines.
+♦ Process incoming events one by one.
+♦ Optionally run in async mode with adapters.'''

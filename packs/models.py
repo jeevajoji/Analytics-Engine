@@ -413,3 +413,14 @@ class Pack:
             "loaded_connectors": list(self.loaded_connectors.keys()),
             "loaded_schemas": list(self.loaded_schemas.keys()),
         }
+
+'''
+Defines the data structures for the pack system.
+
+Enums: PackType, PackStatus describe pack category and lifecycle.
+PackVersion: semantic version (major/minor/patch) with parsing + comparison.
+PackDependency: dependency constraints (>=, <=, ^, ~, ==).
+PackAuthor, OperatorDefinition, ConnectorDefinition, PipelineTemplateDefinition: metadata for content.
+PackManifest: the full manifest schema (pack.json) with all metadata + contents.
+Pack: a loaded pack, holding the manifest and loaded operator/connector/schema objects.
+'''
